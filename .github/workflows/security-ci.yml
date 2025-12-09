@@ -3,7 +3,7 @@ name: security-check
 on:
   pull_request:
     branches:
-      - test          # Solo cuando el PR va hacia test se ejecuta este workflow
+      - test # Solo cuando el PR va hacia test se ejecuta este workflow
     paths:
       - "**/*.c"
       - "**/*.cpp"
@@ -18,7 +18,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Necesario para obtener el historial completo de git
+          lfs: true
+          fetch-depth: 0 # Necesario para obtener el historial completo de git
 
       - name: Set up Python
         uses: actions/setup-python@v5

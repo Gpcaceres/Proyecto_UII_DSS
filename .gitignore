@@ -47,7 +47,8 @@ Thumbs.db
 # =========================
 # Modelos entrenados
 # =========================
-models/
+models/*
+!models/security_classifier.joblib
 # Si quieres mantener un marcador vacío, descomenta:
 #!models/.gitkeep
 
