@@ -1,62 +1,114 @@
-# Proyecto: Laboratorio 1 - Software Seguro (Unidad 2)
+# Pipeline CI/CD seguro con clasificador clásico
 
-## Descripción General
-Este proyecto corresponde al **Laboratorio 1** de la asignatura de Software Seguro, Unidad 2. El objetivo principal es analizar y corregir vulnerabilidades de seguridad en código fuente, aplicando buenas prácticas y herramientas de análisis estático. El laboratorio se centra en la identificación, documentación y remediación de fallos de seguridad comunes en aplicaciones de software.
+Este repositorio provee el esqueleto mínimo para entrenar y usar un modelo **no LLM** que clasifica código fuente como `seguro` o `vulnerable` dentro de un pipeline CI/CD con enfoque *shift-left*. Incluye:
 
-## Objetivos
-- Identificar vulnerabilidades de seguridad en código fuente.
-- Aplicar herramientas de análisis estático para detectar fallos.
-- Documentar los hallazgos y proponer soluciones seguras.
-- Implementar correcciones en el código para mitigar los riesgos detectados.
-
-## Actividades Principales
-1. **Análisis de Código Fuente:**
-   - Revisión manual del código proporcionado para identificar posibles vulnerabilidades.
-   - Enfoque en fallos comunes como inyecciones, manejo inseguro de datos, errores de validación, etc.
-
-2. **Uso de Herramientas de Análisis Estático:**
-   - Aplicación de herramientas como SonarQube, Bandit, o similares para el análisis automatizado.
-   - Registro de los hallazgos relevantes y comparación con el análisis manual.
-
-3. **Documentación de Vulnerabilidades:**
-   - Elaboración de un reporte detallado de cada vulnerabilidad encontrada.
-   - Descripción del tipo de vulnerabilidad, su impacto y ejemplos de explotación.
-   - Propuesta de soluciones o mitigaciones para cada caso.
-
-4. **Corrección de Vulnerabilidades:**
-   - Modificación del código fuente para eliminar o mitigar los riesgos detectados.
-   - Justificación de los cambios realizados y evidencia de la mejora en la seguridad.
-
-## Estructura Recomendada del Proyecto
-- `modelo.py`: Código fuente principal a analizar y corregir.
-- `CVEFixes.csv`: Registro de vulnerabilidades (CVE) y sus respectivas correcciones.
-- `README.md`: Este documento, con la guía y explicación del laboratorio.
-
-## Recomendaciones de Seguridad
-- Validar y sanear todas las entradas de usuario.
-- Utilizar funciones y librerías seguras para el manejo de datos sensibles.
-- Evitar el uso de contraseñas o datos sensibles en texto plano.
-- Aplicar el principio de menor privilegio en el acceso a recursos.
-- Documentar todos los cambios y justificar las decisiones de seguridad.
-
-## Ejemplo de Documentación de Vulnerabilidad
-| ID CVE         | Descripción Breve                | Impacto         | Solución Propuesta         |
-|----------------|----------------------------------|-----------------|---------------------------|
-| CVE-XXXX-YYYY  | Inyección SQL en función login() | Alto            | Uso de consultas preparadas|
-
-## Herramientas Sugeridas
-- [SonarQube](https://www.sonarqube.org/)
-- [Bandit](https://bandit.readthedocs.io/en/latest/)
-- [PyLint](https://pylint.org/)
-
-## Entregables
-- Código fuente corregido (`modelo.py`).
-- Archivo `CVEFixes.csv` con el registro de vulnerabilidades y correcciones.
-- Reporte/documentación detallada de los hallazgos y soluciones.
-
-## Créditos
-Elaborado para la materia de **Software Seguro**.
+- Dataset de demostración (`data/demo_dataset.csv`) con fragmentos Python etiquetados.
+- Extracción de features clásicas (tokens, profundidad AST, llamadas peligrosas y sanitización).
+- Entrenamiento de un modelo de **RandomForest** con validación cruzada y guardado en `.joblib`.
+- Inferencia en archivos de código para integrarlo en jobs de revisión de seguridad.
 
 ---
 
-> **Nota:** Este laboratorio NO incluye la parte de integración continua ni despliegue automatizado.
+## Dataset BigVul (C/C++)
+
+Este proyecto incluye un conversor:
+
+```
+python -m secure_pipeline.convert_bigvul --input data/MSR_data_cleaned.csv --output data/bigvul_pipeline.csv
+```
+
+El conversor transforma el dataset BigVul (`MSR_data_cleaned.csv`) al formato estándar del pipeline:
+
+```
+id,label,language,code
+```
+
+El archivo resultante (`data/bigvul_pipeline.csv`) puede entrenar modelos para vulnerabilidades en C/C++.
+
+---
+
+# 🚀 Uso rápido en Windows (PowerShell)
+
+```powershell
+cd "C:\Users\patri\OneDrive\Escritorio\pipeline-ci-cd"
+
+# Crear y activar entorno virtual
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Actualizar pip (opcional)
+python -m pip install --upgrade pip
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Instalar en modo editable
+pip install -e .
+
+# Convertir dataset BigVul
+python -m secure_pipeline.convert_bigvul --input data/MSR_data_cleaned.csv --output data/bigvul_pipeline.csv
+
+# Entrenar modelo Demo
+python -m secure_pipeline.train --dataset data/demo_dataset.csv --model-path models/security_classifier.joblib
+
+# Entrenar modelo BigVul
+python -m secure_pipeline.train --dataset data/bigvul_pipeline.csv --model-path models/security_classifier.joblib
+
+# Inferencia
+python -m secure_pipeline.infer sample.py
+```
+
+---
+
+## 📊 Resultados del modelo (BigVul)
+
+Entrenamiento con 199k funciones C/C++:
+
+- Accuracy validación cruzada: **0.852**
+- Accuracy global: **0.89**
+- Recall vulnerable: **0.75**
+- F1 vulnerable: **0.42**
+
+El modelo logra identificar vulnerabilidades reales en C/C++ con un desempeño robusto pese al desbalance extremo del dataset.
+
+---
+
+## 🔧 Integración con CI/CD
+
+1. **Pull Request → Ejecuta el clasificador**
+2. Los archivos modificados son evaluados por:
+   ```
+   python -m secure_pipeline.infer archivo.cpp
+   ```
+3. Si la predicción devuelve `vulnerable`, el pipeline **bloquea el merge**.
+4. Notificación por Telegram, Slack o email con el JSON de predicción.
+5. Si pasa, continúa a pruebas automatizadas y despliegue.
+
+---
+
+## 📁 Estructura del repositorio
+
+```
+secure_pipeline/
+ ├── data.py
+ ├── features.py
+ ├── train.py
+ ├── infer.py
+ ├── convert_bigvul.py
+data/
+ ├── demo_dataset.csv
+ ├── MSR_data_cleaned.csv
+ ├── bigvul_pipeline.csv
+models/
+ └── security_classifier.joblib
+```
+
+---
+
+## 📜 Licencia
+
+Proyecto educativo para investigación y prácticas de CI/CD seguro.  
+
+
+---
+

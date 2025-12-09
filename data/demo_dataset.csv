@@ -1,0 +1,56 @@
+id,label,language,code
+1,safe,python,"def add(a, b):
+    return a + b"
+2,vulnerable,python,"def bad_query(conn, username):
+    sql = 'SELECT * FROM users WHERE name=' + username
+    return conn.execute(sql)"
+3,vulnerable,python,"def command_injection(user):
+    import subprocess
+    return subprocess.run(f'echo {user} | sh', shell=True)"
+4,vulnerable,python,"def debug_exec(code):
+    exec(code)"
+5,safe,python,"def greet(name):
+    if not name:
+        return 'Hi'
+    return f'Hello {name}'"
+6,vulnerable,python,"def insecure_deserialize(data):
+    import yaml
+    return yaml.load(data, Loader=yaml.FullLoader)"
+7,vulnerable,python,"def insecure_eval(expr):
+    return eval(expr)"
+8,vulnerable,python,"def no_sanitize_template(user):
+    return f'<div>{user}</div>'"
+9,safe,python,"def path_join(root, name):
+    return root + '/' + name"
+10,safe,python,"def process(data):
+    return [d.strip() for d in data if d]"
+11,safe,python,"def safe_deserialize(data):
+    import yaml
+    return yaml.safe_load(data)"
+12,safe,python,"def safe_eval(expr):
+    allowed = {'x':1, 'y':2}
+    return eval(expr, {'__builtins__': None}, allowed)"
+13,safe,python,"def safe_query(conn, username):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM users WHERE name=%s', (username,))
+    return cur.fetchall()"
+14,safe,python,"def safe_template(user):
+    return f'<div>{user.replace('<', '&lt;')}'"
+15,safe,python,"def sanitized_command(user):
+    import shlex, subprocess
+    return subprocess.run(['echo', shlex.quote(user)], check=True)"
+16,safe,python,"import json
+def load_user(data):
+    return json.loads(data)"
+17,vulnerable,python,"import os
+def run(cmd):
+    return os.system(cmd)"
+18,safe,python,"import os
+def safe_path(root, name):
+    return os.path.join(root, name)"
+19,vulnerable,python,"import pickle
+def load_user(data):
+    return pickle.loads(data)"
+20,vulnerable,python,"import subprocess
+def cat_file(path):
+    return subprocess.check_output('cat ' + path, shell=True)"

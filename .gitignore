@@ -1,0 +1,76 @@
+# =========================
+# Entornos virtuales
+# =========================
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+
+# =========================
+# Archivos compilados de Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Distribución / empaquetado
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# =========================
+# Configuración de editores / IDE
+# =========================
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+
+# =========================
+# Archivos de sistema
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Variables de entorno / configs locales
+# =========================
+.env
+.env.*
+*.local
+
+# =========================
+# Modelos entrenados
+# =========================
+models/
+# Si quieres mantener un marcador vacío, descomenta:
+#!models/.gitkeep
+
+# =========================
+# Datos
+# Ignora todo menos los CSV que quieres versionar
+# =========================
+data/*
+!data/demo_dataset.csv
+!data/msr_prepared.csv
+!data/MSR_data_cleaned.csv
+!data/bigvul_pipeline.csv
+# Si quieres permitir un marcador vacío:
+#!data/.gitkeep
+
+# =========================
+# Logs y cachés
+# =========================
+*.log
+logs/
+pytest_debug.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+data/bigvul_pipeline.csv
+data/MSR_data_cleaned.csv
