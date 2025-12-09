@@ -47,7 +47,7 @@ Thumbs.db
 # =========================
 # Modelos entrenados
 # =========================
-models/
+#models/
 # Si quieres mantener un marcador vacío, descomenta:
 #!models/.gitkeep
 
