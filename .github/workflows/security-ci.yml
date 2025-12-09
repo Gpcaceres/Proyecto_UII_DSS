@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para obtener el historial completo de git
 
       - name: Set up Python
         uses: actions/setup-python@v5
