@@ -40,6 +40,8 @@ jobs:
 
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tr '\n' ' ')
           echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "Archivos detectados en el diff:"
+          echo "$CHANGED_FILES"
 
       - name: Skip if no relevant files changed
         if: steps.diff.outputs.files == ''
@@ -49,4 +51,4 @@ jobs:
         if: steps.diff.outputs.files != ''
         run: |
           echo "Archivos cambiados: ${{ steps.diff.outputs.files }}"
-          python -m secure_pipeline.ci_check "${{ steps.diff.outputs.files }}"
+          python -m secure_pipeline.ci_check ${{ steps.diff.outputs.files }}
