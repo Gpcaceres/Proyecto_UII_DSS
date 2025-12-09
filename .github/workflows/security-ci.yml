@@ -3,7 +3,7 @@ name: security-check
 on:
   pull_request:
     branches:
-      - test          # Solo cuando el PR va hacia test
+      - test          # Solo cuando el PR va hacia test se ejecuta este workflow
     paths:
       - "**/*.c"
       - "**/*.cpp"
