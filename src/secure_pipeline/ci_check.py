@@ -42,10 +42,10 @@ def build_dataset(files: List[pathlib.Path]) -> List[Dict]:
             print(f"[WARN] No se pudo leer {f}: {e}", file=sys.stderr)
             continue
 
-        features = extract_features(source, lang=f.suffix.lstrip("."))
+        # OJO: aquí cambiamos lang= por language=
+        features = extract_features(source, language=f.suffix.lstrip("."))
         records.append({"path": str(f), "features": features})
     return records
-
 
 def run_check(files: List[str]) -> int:
     # Filtrar lista vacía
