@@ -1,4 +1,4 @@
-// src/demo_unsafe.c
+// src/demo_unsafe.c pruebas
 // Ejemplo deliberadamente inseguro para probar detección del modelo.
 // Contiene patrones clásicos de vulnerabilidad buffer overflow y command injection.
 

@@ -1,4 +1,4 @@
-// src/demo_safe.c
+// src/demo_safe.c pruebas
 // Ejemplo seguro para probar el pipeline.
 // No usa funciones peligrosas como gets, strcpy sin tamaño, system, etc.
 
