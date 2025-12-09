@@ -3,7 +3,7 @@ name: security-check
 on:
   pull_request:
     branches:
-      - test # Solo cuando el PR va hacia test se ejecuta este workflow
+      - test
     paths:
       - "**/*.c"
       - "**/*.cpp"
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-          fetch-depth: 0 # Necesario para obtener el historial completo de git
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -41,7 +41,12 @@ jobs:
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tr '\n' ' ')
           echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
+      - name: Skip if no relevant files changed
+        if: steps.diff.outputs.files == ''
+        run: echo "No relevant files changed, skipping security model."
+
       - name: Run security check on changed files
+        if: steps.diff.outputs.files != ''
         run: |
           echo "Archivos cambiados: ${{ steps.diff.outputs.files }}"
-          python -m secure_pipeline.ci_check ${{ steps.diff.outputs.files }}
+          python -m secure_pipeline.ci_check "${{ steps.diff.outputs.files }}"
