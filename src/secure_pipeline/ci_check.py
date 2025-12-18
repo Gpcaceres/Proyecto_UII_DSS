@@ -10,7 +10,8 @@ import joblib
 
 from .features import extract_features
 
-MODEL_PATH = pathlib.Path("models/security_classifier.joblib")
+# Usar el modelo balanceado que detecta mejor las vulnerabilidades
+MODEL_PATH = pathlib.Path("models/security_classifier_balanced.joblib")
 
 
 def load_model():
