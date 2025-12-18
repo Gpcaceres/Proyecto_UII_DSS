@@ -99,7 +99,7 @@ def train_model(dataset_path: pathlib.Path, model_path: pathlib.Path) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Entrena un clasificador de vulnerabilidades")
     parser.add_argument("--dataset", type=pathlib.Path, default=DatasetConfig().local_path,
-                        help="Ruta al CSV de dataset")
+                        help="Ruta al dataset (CSV o JSON). Por defecto intentará usar data/MSR_data_cleaned.json si está presente")
     parser.add_argument("--model-path", type=pathlib.Path, default=MODEL_DEFAULT_PATH,
                         help="Ruta de salida del modelo .joblib")
     args = parser.parse_args()
