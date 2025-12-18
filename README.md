@@ -14,13 +14,15 @@ Este repositorio provee el esqueleto mínimo para entrenar y usar un modelo **no
 Este proyecto incluye un conversor:
 
 ```
-python -m secure_pipeline.convert_bigvul --input data/MSR_data_cleaned.csv --output data/bigvul_pipeline.csv
+python -m secure_pipeline.convert_bigvul --input data/demo_dataset.csv --output data/bigvul_pipeline.csv
 ```
 
-El conversor transforma el dataset BigVul (`MSR_data_cleaned.csv`) al formato estándar del pipeline:
+El conversor transforma el dataset BigVul (`MSR_data_cleaned.json`) al formato estándar del pipeline:
 
-```
-id,label,language,code
+```bash
+# Si tienes el JSON limpio en data/, puedes convertirlo y entrenar así:
+python -m secure_pipeline.convert_bigvul --input data/MSR_data_cleaned.json --output data/bigvul_pipeline.csv
+python -m secure_pipeline.train --dataset data/MSR_data_cleaned.json --model-path models/security_classifier.joblib
 ```
 
 El archivo resultante (`data/bigvul_pipeline.csv`) puede entrenar modelos para vulnerabilidades en C/C++.
@@ -45,14 +47,14 @@ pip install -r requirements.txt
 # Instalar en modo editable
 pip install -e .
 
-# Convertir dataset BigVul
-python -m secure_pipeline.convert_bigvul --input data/MSR_data_cleaned.csv --output data/bigvul_pipeline.csv
+# Convertir dataset BigVul (si tienes JSON limpio)
+python -m secure_pipeline.convert_bigvul --input data/MSR_data_cleaned.json --output data/bigvul_pipeline.csv
 
-# Entrenar modelo Demo
-python -m secure_pipeline.train --dataset data/demo_dataset.csv --model-path models/security_classifier.joblib
-
-# Entrenar modelo BigVul
+# Entrenar modelo con BigVul
 python -m secure_pipeline.train --dataset data/bigvul_pipeline.csv --model-path models/security_classifier.joblib
+
+# Entrenar directamente desde JSON
+python -m secure_pipeline.train --dataset data/MSR_data_cleaned.json --model-path models/security_classifier.joblib
 
 # Inferencia
 python -m secure_pipeline.infer sample.py
@@ -97,7 +99,7 @@ secure_pipeline/
  ├── convert_bigvul.py
 data/
  ├── demo_dataset.csv
- ├── MSR_data_cleaned.csv
+ ├── MSR_data_cleaned.json
  ├── bigvul_pipeline.csv
 models/
  └── security_classifier.joblib

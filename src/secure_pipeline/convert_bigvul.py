@@ -6,8 +6,8 @@ from typing import List, Optional
 
 import pandas as pd
 
-DEFAULT_RAW_PATH = pathlib.Path("data/MSR_data_cleaned.csv")
-DEFAULT_OUTPUT_PATH = pathlib.Path("data/bigvul_pipeline.csv")
+DEFAULT_RAW_PATH = pathlib.Path("../../data/MSR_data_cleaned.json")
+DEFAULT_OUTPUT_PATH = pathlib.Path("../../data/bigvul_pipeline.csv")
 
 
 def _normalize_language(value: Optional[str]) -> str:
@@ -69,7 +69,16 @@ def convert_dataset(raw_path: pathlib.Path = DEFAULT_RAW_PATH, output_path: path
     if not raw_path.exists():
         raise FileNotFoundError(f"No se encontró el dataset original en {raw_path}")
 
-    df = pd.read_csv(raw_path)
+    # Soportar CSV y JSON/JSONL
+    suffix = raw_path.suffix.lower()
+    if suffix in {".json", ".jsonl"}:
+        try:
+            df = pd.read_json(raw_path, lines=True)
+        except ValueError:
+            df = pd.read_json(raw_path, lines=False)
+    else:
+        df = pd.read_csv(raw_path)
+
     records = _build_records(df)
     pipeline_df = pd.DataFrame(records, columns=["id", "label", "language", "code"])
     pipeline_df = pipeline_df[pipeline_df["code"].str.len() > 0]
