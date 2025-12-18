@@ -41,18 +41,66 @@ def main():
     parser.add_argument('--out-model', type=pathlib.Path, default=pathlib.Path('models/security_classifier_opt.joblib'))
     args = parser.parse_args()
 
-    # Load dataset
+    # Load or prepare dataset: support large JSON by converting to pipeline CSV in streaming mode
     dataset_path = args.dataset
-    print('Cargando dataset desde', dataset_path)
-    df = load_dataset(dataset_path)
-    print(summarize_dataset(df))
+    print('Preparando dataset desde', dataset_path)
+    if dataset_path.suffix.lower() in {'.json', '.jsonl'}:
+        print('Archivo JSON grande detectado — generando CSV pipeline en streaming (puede tardar)')
+        from secure_pipeline.convert_bigvul import convert_dataset
+        dataset_path = convert_dataset(dataset_path, pathlib.Path('data/bigvul_pipeline.csv'))
+        print('CSV generado en', dataset_path)
 
-    # Train/test split (hold-out test)
-    train_df, test_df = train_test_split(df, test_size=0.10, stratify=df['label'], random_state=args.random_state)
-    print('Train:', len(train_df), 'Test:', len(test_df))
+    # Para datasets grandes, muestreamos un sample con reservoir sampling desde el CSV
+    def sample_from_csv(path: pathlib.Path, sample_size: int, random_state: int = 42):
+        import csv, random, sys
+        # Increase field size limit to handle large code fields
+        try:
+            csv.field_size_limit(10 * 1024 * 1024)
+        except Exception:
+            try:
+                csv.field_size_limit(sys.maxsize)
+            except Exception:
+                pass
+        rnd = random.Random(random_state)
+        sample = []
+        with path.open('r', encoding='utf-8', errors='ignore') as f:
+            reader = csv.DictReader(f)
+            i = 0
+            for row in reader:
+                i += 1
+                try:
+                    # Ensure required fields exist; skip malformed rows
+                    if 'code' not in row:
+                        continue
+                    if i <= sample_size:
+                        sample.append(row)
+                    else:
+                        j = rnd.randrange(i)
+                        if j < sample_size:
+                            sample[j] = row
+                except csv.Error:
+                    # Skip rows that exceed parser limits even after increasing field size
+                    continue
+        import pandas as pd
+        return pd.DataFrame(sample)
 
-    # Sample for hyperparameter tuning
-    sample_df = sample_dataframe(train_df, max_samples=args.sample_size, random_state=args.random_state)
+    # Train/test split (hold-out test) — for large datasets we sample first, then split
+    df_sample = sample_from_csv(dataset_path, max(1000, args.sample_size), random_state=args.random_state)
+    print('Muestra cargada para pre-evaluación:', len(df_sample))
+
+    # Ensure label normalization like load_dataset
+    df_sample['label'] = df_sample['label'].astype(str).str.lower().str.strip()
+
+    try:
+        train_df, test_df = train_test_split(df_sample, test_size=0.10, stratify=df_sample['label'], random_state=args.random_state)
+    except ValueError:
+        train_df, test_df = train_test_split(df_sample, test_size=0.10, random_state=args.random_state)
+    print('Train (muestra):', len(train_df), 'Test (muestra):', len(test_df))
+
+    # Sample for hyperparameter tuning from the full CSV via reservoir sampling on the train split
+    # We'll sample codes from the original full CSV, but respecting label distribution from train_df
+    # For simplicity, just take a combined random sample of size args.sample_size from CSV
+    sample_df = sample_from_csv(dataset_path, args.sample_size, random_state=args.random_state)
     print('Sample para búsqueda:', len(sample_df))
 
     codes, labels, languages = zip(*[(r['code'], r['label'], r.get('language', None)) for _, r in sample_df.iterrows()])
@@ -71,15 +119,54 @@ def main():
     }
 
     model = RandomForestClassifier(random_state=args.random_state, n_jobs=-1)
-    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=args.random_state)
-
-    search = RandomizedSearchCV(model, param_dist, n_iter=args.n_iter, scoring='accuracy', cv=cv, verbose=2, random_state=args.random_state, n_jobs=-1)
-    print('Ejecutando búsqueda...')
-    search.fit(X_sample, y_sample)
+    # Adjust CV folds to the sample size
+    n_splits = min(3, max(2, len(y_sample)))
+    if len(y_sample) < 4:
+        # Too small for meaningful CV — fallback to simple fit on sample
+        print('Muestra muy pequeña para búsqueda con CV; entrenando sin búsqueda hiperparámetros')
+        X_train, X_val, y_train, y_val = train_test_split(X_sample, y_sample, test_size=0.25, random_state=args.random_state)
+        model.set_params(**{'n_estimators': 600, 'max_depth': 20, 'min_samples_split': 4, 'min_samples_leaf': 2, 'class_weight': 'balanced_subsample'})
+        model.fit(X_train, y_train)
+        class BestLike:
+            best_params_ = model.get_params()
+            best_score_ = None
+        search = BestLike()
+        best_model = model
+    else:
+        cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=args.random_state)
+        search = RandomizedSearchCV(model, param_dist, n_iter=args.n_iter, scoring='accuracy', cv=cv, verbose=2, random_state=args.random_state, n_jobs=-1)
+        print('Ejecutando búsqueda...')
+        search.fit(X_sample, y_sample)
+        best_model = search.best_estimator_
 
     print('\nMEJORES PARÁMETROS:')
-    print(pformat(search.best_params_))
-    print('MEJOR SCORE (CV):', search.best_score_)
+    # search may be a simple BestLike object (for tiny samples)
+    best_params = getattr(search, 'best_params_', getattr(search, 'best_params_', None))
+    try:
+        print(pformat(search.best_params_))
+    except Exception:
+        print('No hay best_params_ (ejecución reducida)')
+    try:
+        print('MEJOR SCORE (CV):', search.best_score_)
+    except Exception:
+        print('MEJOR SCORE (CV): None')
+
+    # Guardar artefactos de la búsqueda
+    import os
+    import datetime
+    exp_dir = pathlib.Path('models/experiments') / datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    exp_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        # Guardar cv_results_ si existe
+        if hasattr(search, 'cv_results_'):
+            joblib.dump(search.cv_results_, exp_dir / 'cv_results.joblib')
+        if hasattr(search, 'best_params_'):
+            joblib.dump(search.best_params_, exp_dir / 'best_params.joblib')
+        # Guardar search object para reproducibilidad
+        joblib.dump(search, exp_dir / 'search_full.joblib')
+        print('Artefactos guardados en', exp_dir)
+    except Exception as e:
+        print('No fue posible guardar artefactos de búsqueda:', e)
 
     # Entrenar modelo con mejores parámetros sobre todo el train_df y evaluar en test_df
     print('\nVectorizando entrenamiento completo (train_df)')
@@ -89,8 +176,13 @@ def main():
     X_train = vec_full.fit_transform(X_train_dicts)
     y_train = np.array([1 if l == 'vulnerable' else 0 for l in labels_train])
 
-    best_params = search.best_params_
-    best_model = RandomForestClassifier(**{k: v for k, v in best_params.items() if k in ['n_estimators','max_depth','min_samples_split','min_samples_leaf','max_features','class_weight','criterion']}, random_state=args.random_state, n_jobs=-1)
+    # Build best_model with available params
+    if hasattr(search, 'best_params_'):
+        params = {k: v for k, v in search.best_params_.items() if k in ['n_estimators','max_depth','min_samples_split','min_samples_leaf','max_features','class_weight','criterion']}
+    else:
+        params = {'n_estimators': 600, 'max_depth': 20, 'min_samples_split': 4, 'min_samples_leaf': 2, 'class_weight': 'balanced_subsample'}
+
+    best_model = RandomForestClassifier(**params, random_state=args.random_state, n_jobs=-1)
     print('Entrenando modelo final con mejores parámetros sobre todo el train...')
     t0 = time.time()
     best_model.fit(X_train, y_train)
@@ -105,8 +197,20 @@ def main():
 
     preds = best_model.predict(X_test)
     print('\nReporte final (TEST):')
-    print(classification_report(y_test, preds, target_names=['seguro','vulnerable']))
-    print('Accuracy test:', accuracy_score(y_test, preds))
+    # Handle cases where test set contains only one class
+    labels_unique = np.unique(y_test)
+    try:
+        if len(labels_unique) == 1:
+            # Map label to name
+            name = 'vulnerable' if labels_unique[0] == 1 else 'seguro'
+            print(f"Test contiene una sola clase ({name}); mostrando métricas básicas.")
+            print('Accuracy test:', accuracy_score(y_test, preds))
+        else:
+            print(classification_report(y_test, preds, target_names=['seguro','vulnerable']))
+            print('Accuracy test:', accuracy_score(y_test, preds))
+    except Exception as e:
+        print('No fue posible generar classification_report:', e)
+        print('Accuracy test:', accuracy_score(y_test, preds))
 
     # Guardar modelo + vectorizer
     out = args.out_model

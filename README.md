@@ -3,29 +3,76 @@
 Este repositorio provee el esqueleto mínimo para entrenar y usar un modelo **no LLM** que clasifica código fuente como `seguro` o `vulnerable` dentro de un pipeline CI/CD con enfoque *shift-left*. Incluye:
 
 - Dataset de demostración (`data/demo_dataset.csv`) con fragmentos Python etiquetados.
+- **Dataset MSR_data_cleaned.csv** con ~188k vulnerabilidades reales en C/C++.
 - Extracción de features clásicas (tokens, profundidad AST, llamadas peligrosas y sanitización).
 - Entrenamiento de un modelo de **RandomForest** con validación cruzada y guardado en `.joblib`.
 - Inferencia en archivos de código para integrarlo en jobs de revisión de seguridad.
+- **Scripts completos** para procesamiento, validación, entrenamiento e inferencia.
 
 ---
 
-## Dataset BigVul (C/C++)
+## 🚀 Inicio Rápido con MSR_data_cleaned.csv
 
-Este proyecto incluye un conversor:
+**¡NUEVO!** Pipeline completo automatizado para trabajar con MSR_data_cleaned.csv:
 
+```powershell
+# 1. Instalar dependencias
+pip install -r requirements.txt
+pip install -e .
+
+# 2. Ejecutar pipeline completo (procesar, validar, entrenar, probar)
+python scripts\run_pipeline_completo.py
 ```
-python -m secure_pipeline.convert_bigvul --input data/demo_dataset.csv --output data/bigvul_pipeline.csv
+
+**📘 Ver [GUIA_MSR_DATA.md](GUIA_MSR_DATA.md) para documentación completa y detallada.**
+
+### Scripts Disponibles
+
+| Script | Descripción |
+|--------|-------------|
+| `scripts/run_pipeline_completo.py` | **Pipeline completo automatizado** |
+| `scripts/proceso_msr.py` | Procesa MSR_data_cleaned.csv → msr_pipeline.csv |
+| `scripts/validar_datos.py` | Valida integridad del dataset |
+| `scripts/entrenar_modelo.py` | Entrena modelo con métricas completas |
+| `scripts/inferencia_pruebas.py` | Inferencia en archivos, batch o modo interactivo |
+
+---
+
+## Dataset BigVul / MSR (C/C++)
+
+### Opción 1: Usar el pipeline automatizado (Recomendado)
+
+```powershell
+python scripts\run_pipeline_completo.py
 ```
 
-El conversor transforma el dataset BigVul (`MSR_data_cleaned.json`) al formato estándar del pipeline:
+### Opción 2: Usar módulos del paquete
+
+El proyecto incluye conversores para formato MSR:
 
 ```bash
-# Si tienes el JSON limpio en data/, puedes convertirlo y entrenar así:
+# Convertir desde JSON
 python -m secure_pipeline.convert_bigvul --input data/MSR_data_cleaned.json --output data/bigvul_pipeline.csv
+
+# Entrenar directamente
 python -m secure_pipeline.train --dataset data/MSR_data_cleaned.json --model-path models/security_classifier.joblib
 ```
 
-El archivo resultante (`data/bigvul_pipeline.csv`) puede entrenar modelos para vulnerabilidades en C/C++.
+### Opción 3: Scripts paso a paso
+
+```powershell
+# 1. Procesar
+python scripts\proceso_msr.py
+
+# 2. Validar
+python scripts\validar_datos.py data\msr_pipeline.csv
+
+# 3. Entrenar
+python scripts\entrenar_modelo.py
+
+# 4. Probar
+python scripts\inferencia_pruebas.py --test-examples
+```
 
 ---
 
