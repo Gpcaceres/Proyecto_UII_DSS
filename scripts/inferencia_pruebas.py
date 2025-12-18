@@ -21,8 +21,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from secure_pipeline.features import extract_features
 
 
-def load_model(model_path: str = "models/security_classifier_msr.joblib"):
-    """Carga el modelo entrenado."""
+def load_model(model_path: str = "models/security_classifier_balanced.joblib"):
+    """Carga el modelo entrenado (por defecto el modelo balanceado en producción)."""
     
     path = Path(model_path)
     if not path.exists():
@@ -331,8 +331,8 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Inferencia con el modelo entrenado")
-    parser.add_argument("--model", default="models/security_classifier_msr.joblib",
-                       help="Ruta al modelo entrenado")
+    parser.add_argument("--model", default="models/security_classifier_balanced.joblib",
+                       help="Ruta al modelo entrenado (por defecto: modelo balanceado en producción)")
     parser.add_argument("--file", help="Archivo de código a analizar")
     parser.add_argument("--dataset", help="Dataset para análisis en batch")
     parser.add_argument("--sample", type=int, help="Tamaño de muestra para batch")
