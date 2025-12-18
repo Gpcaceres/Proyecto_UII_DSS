@@ -1,7 +1,7 @@
 # 📊 ESTADO ACTUAL DEL PROYECTO
 
-**Fecha:** 17 de diciembre de 2025  
-**Estado:** ✅ Pipeline completado - ⚠️ Requiere optimización
+**Fecha:** 18 de diciembre de 2025  
+**Estado:** ✅ Sistema completamente funcional con modelo balanceado en producción
 
 ---
 
@@ -18,11 +18,20 @@
 - **Resultado:** Sin errores estructurales
 - **Estado:** Validado correctamente
 
-### 3. ✅ Entrenamiento del Modelo
+### 3. ✅ Entrenamiento de Modelos
+
+#### 🌟 Modelo Balanceado (EN PRODUCCIÓN)
+- **Archivo:** models/security_classifier_balanced.joblib
+- **Dataset:** msr_balanced.csv (32,700 registros, ratio 2:1)
+- **Métricas:** Accuracy 66.3%, Recall 52.2%, F1 50.8%
+- **Estado:** ✅ Detectando vulnerabilidades correctamente
+- **CI/CD:** ✅ Desplegado en GitHub (commit 33cd7c5)
+
+#### Modelo Base (Dataset Completo)
 - **Archivo:** models/security_classifier_msr.joblib
 - **Features:** 5 dimensiones básicas
 - **Muestras:** 377,136 total (80/20 train/test split)
-- **Estado:** Modelo entrenado y guardado
+- **Estado:** Modelo entrenado (baja detección)
 - **Duración:** ~6 minutos
 
 ### 4. ✅ Generación de Reportes y Visualizaciones

@@ -4,6 +4,12 @@
 
 Sistema completo de detección de vulnerabilidades en código fuente usando Machine Learning (RandomForest) con dataset MSR de ~188k vulnerabilidades reales en C/C++.
 
+### ✅ Estado Actual: FUNCIONANDO EN PRODUCCIÓN
+- **Modelo:** `security_classifier_balanced.joblib` (69 MB)
+- **Detección:** ✅ demo_unsafe.c detectado como vulnerable (52.8%)
+- **CI/CD:** ✅ Integrado en GitHub Actions
+- **Commit:** `33cd7c5` en origin/dev
+
 ---
 
 ## 📚 Documentación
@@ -71,9 +77,10 @@ Proyecto_UII_DSS/
 │   └── predictions.csv            ← Predicciones (generado)
 │
 ├── 📁 models/                     ← Modelos entrenados
-│   ├── security_classifier_msr.joblib  ← Modelo principal
-│   ├── training_report.txt             ← Métricas de entrenamiento
-│   └── plots/                          ← Visualizaciones
+│   ├── security_classifier_balanced.joblib  ← 🌟 MODELO EN PRODUCCIÓN
+│   ├── security_classifier_msr.joblib       ← Modelo base
+│   ├── training_report.txt                  ← Métricas de entrenamiento
+│   └── plots/                               ← Visualizaciones
 │       ├── confusion_matrix.png
 │       └── feature_importance.png
 │

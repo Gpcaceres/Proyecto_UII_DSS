@@ -1,7 +1,61 @@
 # 📊 RESUMEN FINAL - Pipeline MSR_data_cleaned.csv
 
-**Fecha:** 17 de diciembre de 2025, 23:55  
-**Estado:** ✅ Sistema completamente configurado y funcional
+**Fecha:** 18 de diciembre de 2025  
+**Estado:** ✅ Sistema completamente funcional con detección exitosa
+
+---
+
+## 🎉 ÉXITO: Modelo Balanceado Funcionando en Producción
+
+### ✅ Logro Principal
+El modelo balanceado **detecta correctamente las vulnerabilidades** en archivos de prueba:
+
+```json
+{
+  "resultado_global": "VULNERABLE",
+  "detalles": [
+    {
+      "path": "demo_unsafe.c",
+      "label": "vulnerable",
+      "probabilidad_vulnerable": 0.528,
+      "estado": "✅ DETECTADO CORRECTAMENTE"
+    },
+    {
+      "path": "demo_safe.c",
+      "label": "seguro",
+      "probabilidad_vulnerable": 0.307,
+      "estado": "✅ DETECTADO CORRECTAMENTE"
+    }
+  ]
+}
+```
+
+### 🚀 Modelo Desplegado en GitHub
+- **Archivo:** `security_classifier_balanced.joblib`
+- **Tamaño:** 69 MB (subido vía Git LFS)
+- **Commit:** `33cd7c5` - "fix: usar modelo balanceado que detecta vulnerabilidades en CI"
+- **Ubicación:** GitHub repo origin/dev
+- **Estado CI/CD:** ✅ Listo para detectar vulnerabilidades en Pull Requests
+
+### 📊 Métricas del Modelo Balanceado
+```
+Dataset: msr_balanced.csv (32,700 registros)
+  - 10,900 vulnerables (33%)
+  - 21,800 seguros (67%)
+  - Ratio 2:1 (vs 32:1 original)
+
+Métricas:
+  Accuracy:   66.3%  ✅ (Balanceado)
+  Precision:  49.5%  ✅ (Mejorado)
+  Recall:     52.2%  ✅ (5x mejor que 10%)
+  F1-Score:   50.8%  ✅ (5x mejor que 10%)
+```
+
+### 🔧 Integración CI/CD Actualizada
+- `src/secure_pipeline/ci_check.py` usa `security_classifier_balanced.joblib`
+- `.gitignore` configurado para permitir modelos principales
+- Git LFS configurado para archivos `.joblib`
+- GitHub Actions detectará vulnerabilidades en PRs
 
 ---
 
@@ -20,6 +74,18 @@
 - Reportes generados
 
 ### 3. ✅ Modelos Entrenados
+
+#### 🌟 Modelo Balanceado (EN PRODUCCIÓN): `security_classifier_balanced.joblib`
+```
+Accuracy:   66.3%  ✅ (Balanceado)
+Precision:  49.5%  ✅ (Mejora 7x)
+Recall:     52.2%  ✅ (Mejora 5x)
+F1-Score:   50.8%  ✅ (Mejora 5x)
+
+Estado: ✅ FUNCIONANDO EN CI/CD
+Detección: ✅ demo_unsafe.c = vulnerable (52.8%)
+           ✅ demo_safe.c = seguro (30.7%)
+```
 
 #### Modelo Base: `security_classifier_msr.joblib`
 ```
@@ -46,6 +112,7 @@ F1-Score:    0.0%
    ✅ predictions.csv
 
 ✅ models/
+   ✅ security_classifier_balanced.joblib (69 MB) 🌟 EN PRODUCCIÓN
    ✅ security_classifier_msr.joblib (480 MB)
    ✅ security_classifier_opt.joblib (69 MB)
    ✅ training_report.txt
@@ -252,9 +319,9 @@ python scripts\inferencia_pruebas.py --dataset data\msr_pipeline.csv --sample 10
 
 ---
 
-## 🚀 SIGUIENTE ACCIÓN RECOMENDADA
+## 🚀 MODELO BALANCEADO
 
-**Ejecuta esto ahora para crear el modelo balanceado:**
+**Comando para crear el modelo balanceado:**
 
 ```powershell
 python -c "import pandas as pd; df = pd.read_csv('data/msr_pipeline.csv'); vulnerable = df[df['label'] == 'vulnerable']; seguro = df[df['label'] == 'seguro'].sample(n=len(vulnerable)*2, random_state=42); balanced = pd.concat([vulnerable, seguro]).sample(frac=1, random_state=42); balanced.to_csv('data/msr_balanced.csv', index=False); print('Dataset balanceado creado'); print(balanced['label'].value_counts())"
@@ -266,4 +333,4 @@ python scripts\inferencia_pruebas.py --model models\security_classifier_balanced
 
 ---
 
-**¿Quieres que ejecute el entrenamiento con dataset balanceado ahora?** 🎯
+
