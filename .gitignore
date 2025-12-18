@@ -48,6 +48,9 @@ Thumbs.db
 # Modelos entrenados
 # =========================
 models/*
+# Excepto los modelos principales (están en Git LFS)
+!models/security_classifier.joblib
+!models/security_classifier_balanced.joblib
 !models/security_classifier.joblib
 # Si quieres mantener un marcador vacío, descomenta:
 #!models/.gitkeep
